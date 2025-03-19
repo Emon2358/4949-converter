@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>4949 coverter</title>
-  <!-- ドットフォント -->
+  <title>emon＾＾</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     /* 全体設定 */
@@ -12,38 +11,64 @@
       margin: 0;
       padding: 0;
       font-family: 'Press Start 2P', monospace;
-      background: url('https://i.pinimg.com/736x/c5/df/25/c5df256709eb23175ed823ee6c8488e7.jpg') no-repeat center center fixed;
-      background-size: cover;
+      background: black;
       color: #fff;
-      position: relative;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
-    /* グラデーションオーバーレイ */
-    #gradientOverlay {
+    /* 初回表示時は背景を黒にしコンテンツを隠す */
+    #overlay {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
-      background: linear-gradient(45deg, rgba(0,0,0,0.5), rgba(255,255,255,0.5));
-      animation: gradientAnimation 10s infinite alternate;
-      z-index: 1;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
     }
-    @keyframes gradientAnimation {
-      0% { filter: hue-rotate(0deg); }
-      100% { filter: hue-rotate(360deg); }
+    #startButton {
+      padding: 20px 40px;
+      font-size: 24px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid #0ff;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      transition: background 0.3s;
     }
-    /* 中央コンテンツ */
+    #startButton:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    /* コンテンツ表示時のアニメーション */
+    .hidden {
+      display: none;
+    }
+    .fade-in {
+      animation: fadeIn 1s forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    /* 中央コンテナ */
     .center-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      text-align: center;
       transition: transform 0.1s ease-out;
     }
-    /* 3Dホバーエフェクト */
+    /* 3Dホバー */
     .center-container:hover {
       transition: transform 0.05s ease-out;
     }
@@ -52,13 +77,23 @@
       color: #0ff;
       text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
     }
-    /* 再生進捗バー */
+    /* 再生枠 */
+    .track-info {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 15px;
+      border: 3px solid #0ff;
+      box-shadow: 0 0 10px #0ff;
+      width: 320px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    /* 再生バー */
     #progressBar {
       width: 100%;
       height: 20px;
       background: rgba(0,0,0,0.5);
       border: 2px solid #0ff;
-      margin-top: 20px;
+      margin-top: 10px;
       position: relative;
       overflow: hidden;
     }
@@ -68,14 +103,19 @@
       background: #0ff;
       box-shadow: 0 0 10px #0ff;
     }
-    /* Discordアイコン風の丸枠 */
+    /* 衛門とDiscordアイコン */
+    .emblem {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     .icon-container {
-      width: 100px;
-      height: 100px;
-      margin: 0 auto 10px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       overflow: hidden;
       box-shadow: 0 0 10px rgba(255,255,255,0.5);
+      margin-bottom: 10px;
     }
     .icon-container img {
       width: 100%;
@@ -83,49 +123,32 @@
       object-fit: cover;
       border-radius: 50%;
     }
-    /* 下部キャプション「衛門」 */
     .caption {
-      margin-top: 10px;
-      font-size: 16px;
+      font-size: 32px;
       color: #fff;
       text-shadow: 0 0 5px #fff, 0 0 10px #fff;
-    }
-    /* 初回表示ボタン */
-    #startButton {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 20px 40px;
-      font-size: 24px;
-      cursor: pointer;
-      background: rgba(0,0,0,0.7);
-      border: 2px solid #0ff;
-      color: #0ff;
-      text-shadow: 0 0 5px #0ff;
-      transition: background 0.3s;
-    }
-    #startButton:hover {
-      background: rgba(0,0,0,0.9);
     }
   </style>
 </head>
 <body>
-  <!-- グラデーションオーバーレイ -->
-  <div id="gradientOverlay"></div>
-  
-  <!-- 初回再生ボタン -->
-  <div id="startButton">click here</div>
-  
-  <!-- 中央コンテナ -->
-  <div class="center-container" id="trackContainer" style="display: none;">
-    <div class="icon-container">
-      <img src="https://i.pinimg.com/736x/d4/85/2e/d4852e4d248d7a8f31d7db2127e7d9fd.jpg" alt="Icon">
+  <!-- 初回表示の黒背景 -->
+  <div id="overlay">
+    <div id="startButton">click here</div>
+  </div>
+
+  <!-- メインコンテンツ -->
+  <div class="center-container hidden" id="trackContainer">
+    <div class="emblem">
+      <div class="icon-container">
+        <img src="https://i.pinimg.com/736x/d4/85/2e/d4852e4d248d7a8f31d7db2127e7d9fd.jpg" alt="Icon">
+      </div>
+      <div class="caption">衛門</div>
     </div>
-    <div class="caption">衛門</div>
-    <h2 class="neon" id="trackTitle">Track Title</h2>
-    <div id="progressBar">
-      <div id="progress"></div>
+    <div class="track-info">
+      <h2 class="neon" id="trackTitle">Track Title</h2>
+      <div id="progressBar">
+        <div id="progress"></div>
+      </div>
     </div>
   </div>
   
@@ -136,6 +159,7 @@
     const trackTitle = document.getElementById('trackTitle');
     const progressBar = document.getElementById('progress');
     const trackContainer = document.getElementById('trackContainer');
+    const overlay = document.getElementById('overlay');
     const startButton = document.getElementById('startButton');
     const container = document.querySelector(".center-container");
 
@@ -177,10 +201,11 @@
     // 曲が終了したら次のランダム曲再生
     audioPlayer.addEventListener("ended", playRandomTrack);
 
-    // スタートボタン押下で再生
+    // スタートボタン押下でコンテンツ表示＆再生
     startButton.addEventListener("click", () => {
-      startButton.style.display = "none";
-      trackContainer.style.display = "block";
+      overlay.classList.add("hidden");
+      trackContainer.classList.remove("hidden");
+      trackContainer.classList.add("fade-in");
       loadTracksAndPlay();
     });
 
