@@ -26,6 +26,7 @@
     body.content-visible {
       background: url('https://i.pinimg.com/736x/c5/df/25/c5df256709eb23175ed823ee6c8488e7.jpg') no-repeat center center fixed;
       background-size: cover;
+      transition: background 0.8s ease-in;
     }
     
     /* グラデーションオーバーレイ */
@@ -40,7 +41,7 @@
       animation: gradientAnimation 10s infinite alternate;
       z-index: 1;
       opacity: 0;
-      transition: opacity 0.5s;
+      transition: opacity 0.8s ease;
     }
     
     body.content-visible #gradientOverlay {
@@ -52,6 +53,25 @@
       100% { filter: hue-rotate(360deg); }
     }
     
+    /* ページタイトル */
+    #pageTitle {
+      position: fixed;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 32px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    
+    body.content-visible #pageTitle {
+      opacity: 1;
+    }
+    
     /* 中央コンテンツ */
     .center-container {
       position: absolute;
@@ -59,15 +79,46 @@
       left: 50%;
       transform: translate(-50%, -50%);
       text-align: center;
-      transition: transform 0.1s ease-out;
+      transition: all 0.3s ease-out;
       width: 80%;
       max-width: 500px;
       z-index: 2;
     }
     
-    /* 3Dホバーエフェクト */
+    /* 3Dホバーエフェクト - より滑らかに */
     .center-container:hover {
-      transition: transform 0.05s ease-out;
+      transition: transform 0.15s ease-out;
+    }
+    
+    /* アイコンと衛門の背景 */
+    .icon-caption-container {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #0ff;
+      border-radius: 20px;
+      padding: 28px 20px 18px;
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* グローエフェクト */
+    .icon-caption-container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff, transparent);
+      z-index: -1;
+      border-radius: 22px;
+      animation: borderGlow 3s linear infinite;
+    }
+    
+    @keyframes borderGlow {
+      0% { filter: blur(5px); opacity: 0.7; }
+      50% { filter: blur(8px); opacity: 0.5; }
+      100% { filter: blur(5px); opacity: 0.7; }
     }
     
     /* Discord アイコン風の丸枠 */
@@ -77,67 +128,169 @@
       margin: 0 auto;
       border-radius: 50%;
       overflow: hidden;
-      box-shadow: 0 0 15px rgba(255,255,255,0.8);
-      border: 3px solid #0ff;
       position: relative;
       z-index: 3;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+    }
+    
+    .icon-container::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff);
+      z-index: -1;
+      animation: rotate 3s linear infinite;
+    }
+    
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .icon-container img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      border-radius: 50%;
     }
     
     /* 衛門テキスト */
     .caption {
-      margin: 15px 0;
+      margin: 18px 0 5px;
       font-size: 28px;
       color: #fff;
       text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+      position: relative;
+      display: inline-block;
     }
     
-    /* プレーヤーフレーム */
+    .caption::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -5px;
+      left: 50%;
+      background-color: #0ff;
+      box-shadow: 0 0 8px #0ff;
+      transform: translateX(-50%);
+      transition: width 0.4s ease;
+    }
+    
+    .center-container:hover .caption::after {
+      width: 100%;
+    }
+    
+    /* プレーヤーフレーム - 超丸型 */
     .player-frame {
       background: rgba(0, 0, 0, 0.7);
       border: 2px solid #0ff;
-      border-radius: 10px;
-      padding: 20px;
-      margin-top: 15px;
-      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+      border-radius: 35px;
+      padding: 22px 25px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* プレーヤーフレームのグローエフェクト */
+    .player-frame::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff, transparent);
+      z-index: -1;
+      border-radius: 37px;
+      animation: borderGlow 3s linear infinite;
+      animation-delay: 1.5s;
+    }
+    
+    /* 半円の両端 */
+    .player-frame::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      border-radius: 35px;
+      box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.3);
+      pointer-events: none;
+    }
+    
+    /* プレーヤーの内容 */
+    .player-content {
+      position: relative;
+      z-index: 2;
     }
     
     /* ネオンテキスト */
     .neon {
       color: #0ff;
-      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
-      margin-bottom: 20px;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+      margin-bottom: 22px;
       font-size: 18px;
       word-wrap: break-word;
+      line-height: 1.4;
+      letter-spacing: 1px;
+    }
+    
+    /* 再生進捗バー背景 */
+    #progressBarContainer {
+      background: rgba(0,0,0,0.3);
+      border: 2px solid rgba(0, 255, 255, 0.7);
+      border-radius: 18px;
+      padding: 3px;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
     }
     
     /* 再生進捗バー */
     #progressBar {
       width: 100%;
-      height: 20px;
+      height: 16px;
       background: rgba(0,0,0,0.5);
-      border: 2px solid #0ff;
-      margin-top: 20px;
+      border-radius: 15px;
       position: relative;
       overflow: hidden;
-      border-radius: 5px;
     }
     
     #progress {
       height: 100%;
       width: 0;
-      background: #0ff;
+      background: linear-gradient(90deg, #00ccff, #0ff, #00f0ff);
       box-shadow: 0 0 10px #0ff;
+      border-radius: 15px;
+      transition: width 0.1s linear;
+    }
+    
+    /* 光る粒子エフェクト */
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    
+    body.content-visible #particles {
+      opacity: 1;
     }
     
     /* 初回表示ボタン */
     #startButton {
-      padding: 20px 40px;
+      padding: 22px 42px;
       font-size: 24px;
       cursor: pointer;
       background: rgba(0,0,0,0.7);
@@ -145,8 +298,10 @@
       color: #0ff;
       text-shadow: 0 0 5px #0ff;
       transition: all 0.3s;
-      border-radius: 5px;
+      border-radius: 10px;
       z-index: 10;
+      position: relative;
+      overflow: hidden;
     }
     
     #startButton:hover {
@@ -154,27 +309,55 @@
       transform: scale(1.05);
       box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
     }
+    
+    #startButton::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff);
+      z-index: -1;
+      border-radius: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    #startButton:hover::before {
+      opacity: 1;
+      animation: borderGlow 2s linear infinite;
+    }
   </style>
 </head>
 <body>
   <!-- グラデーションオーバーレイ -->
   <div id="gradientOverlay"></div>
   
+  <!-- 光る粒子エフェクト -->
+  <div id="particles"></div>
+  
   <!-- 初回再生ボタン -->
   <div id="startButton">click here</div>
   
   <!-- 中央コンテナ -->
   <div class="center-container" id="trackContainer" style="display: none;">
-    <div class="icon-container">
-      <img src="https://i.pinimg.com/736x/d4/85/2e/d4852e4d248d7a8f31d7db2127e7d9fd.jpg" alt="Icon">
+    <div class="icon-caption-container">
+      <div class="icon-container">
+        <img src="https://i.pinimg.com/736x/d4/85/2e/d4852e4d248d7a8f31d7db2127e7d9fd.jpg" alt="Icon">
+      </div>
+      
+      <div class="caption">衛門</div>
     </div>
     
-    <div class="caption">衛門</div>
-    
     <div class="player-frame">
-      <h2 class="neon" id="trackTitle">Track Title</h2>
-      <div id="progressBar">
-        <div id="progress"></div>
+      <div class="player-content">
+        <h2 class="neon" id="trackTitle">Track Title</h2>
+        <div id="progressBarContainer">
+          <div id="progressBar">
+            <div id="progress"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -189,6 +372,51 @@
     const startButton = document.getElementById('startButton');
     const container = document.querySelector(".center-container");
     const body = document.body;
+    const pageTitle = document.getElementById('pageTitle');
+    const particles = document.getElementById('particles');
+
+    // 光る粒子を作成
+    function createParticles() {
+      particles.innerHTML = '';
+      const particleCount = 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.style.position = 'absolute';
+        particle.style.width = Math.random() * 3 + 1 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.background = '#0ff';
+        particle.style.borderRadius = '50%';
+        particle.style.boxShadow = '0 0 10px #0ff';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.opacity = Math.random() * 0.5 + 0.2;
+        
+        // ランダムなアニメーション
+        const duration = Math.random() * 10 + 5;
+        particle.style.animation = `float ${duration}s infinite ease-in-out`;
+        
+        // カスタムアニメーション
+        const keyframes = `
+          @keyframes float {
+            0%, 100% {
+              transform: translate(0, 0);
+              opacity: ${Math.random() * 0.5 + 0.2};
+            }
+            50% {
+              transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px);
+              opacity: ${Math.random() * 0.8 + 0.2};
+            }
+          }
+        `;
+        
+        const style = document.createElement('style');
+        style.appendChild(document.createTextNode(keyframes));
+        document.head.appendChild(style);
+        
+        particles.appendChild(particle);
+      }
+    }
 
     // GitHub API からファイルリスト取得
     async function fetchTrackList() {
@@ -221,7 +449,8 @@
     // 再生進捗バー更新
     audioPlayer.addEventListener("timeupdate", () => {
       if (audioPlayer.duration) {
-        progressBar.style.width = (audioPlayer.currentTime / audioPlayer.duration) * 100 + "%";
+        const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = percent + "%";
       }
     });
 
@@ -233,14 +462,17 @@
       startButton.style.display = "none";
       trackContainer.style.display = "block";
       body.classList.add('content-visible');
+      createParticles();
       loadTracksAndPlay();
     });
 
-    // マウスホバーで 3D に傾く処理
+    // マウスホバーで 3D に傾く処理 - より繊細に
     document.addEventListener("mousemove", (e) => {
       if (trackContainer.style.display === "block") {
-        const x = (window.innerWidth / 2 - e.pageX) / 20;
-        const y = (window.innerHeight / 2 - e.pageY) / 20;
+        const x = (window.innerWidth / 2 - e.pageX) / 30;
+        const y = (window.innerHeight / 2 - e.pageY) / 30;
+        
+        // より滑らかな動き
         container.style.transform = `translate(-50%, -50%) rotateY(${x}deg) rotateX(${y}deg)`;
       }
     });
