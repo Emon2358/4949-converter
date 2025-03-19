@@ -13,9 +13,9 @@
       background: url('https://i.pinimg.com/736x/c5/df/25/c5df256709eb23175ed823ee6c8488e7.jpg') no-repeat center center fixed;
       background-size: cover;
       font-family: sans-serif;
+      color: white;
       position: relative;
       z-index: 2;
-      color: white;
     }
     /* 黒と白のグラデーションアニメーションのオーバーレイ */
     #gradientOverlay {
@@ -39,8 +39,15 @@
       z-index: 3;
       padding: 20px;
     }
+    /* プレビュー表示 */
     #previewContainer {
       margin-top: 20px;
+    }
+    /* ボタンのスタイル */
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -50,8 +57,10 @@
   
   <div class="container">
     <h1>4949 coverter</h1>
-    <!-- すべてのファイル形式に対応 -->
-    <input type="file" id="uploader" accept="*/*">
+    <!-- mp4ファイルのみ受け付ける -->
+    <input type="file" id="uploader" accept="video/mp4">
+    <br><br>
+    <button id="convertBtn" disabled>mp4をmp3に変換</button>
     <!-- 変換後のプレビュー表示エリア -->
     <div id="previewContainer"></div>
   </div>
@@ -59,93 +68,64 @@
   <script>
     const { createFFmpeg, fetchFile } = FFmpeg;
     const ffmpeg = createFFmpeg({ log: true });
-    
-    // 利用可能な論理コア数を取得（なければ16をデフォルトに）
-    const maxThreads = navigator.hardwareConcurrency || 16;
-    
+    const uploader = document.getElementById('uploader');
+    const convertBtn = document.getElementById('convertBtn');
+    const previewContainer = document.getElementById('previewContainer');
+
     // ページ読み込み時にffmpegを事前ロード
     (async () => {
       await ffmpeg.load();
       console.log("ffmpeg loaded");
     })();
-    
-    const transcode = async ({ target: { files } }) => {
-      const file = files[0];
+
+    // ファイル選択時、mp4以外の場合は変換できないようにする
+    uploader.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file && file.type === 'video/mp4') {
+        convertBtn.disabled = false;
+      } else {
+        convertBtn.disabled = true;
+        alert("mp4ファイルを選択してください。");
+      }
+    });
+
+    // mp4をmp3に変換する処理
+    convertBtn.addEventListener('click', async () => {
+      const file = uploader.files[0];
+      if (!file || file.type !== 'video/mp4') {
+        alert("有効なmp4ファイルが選択されていません。");
+        return;
+      }
+      
       const fileName = file.name;
-      const fileType = file.type;
-      
-      // 仮想ファイルシステムに入力ファイルを書き込む
+      // 仮想ファイルシステムへファイル書き込み
       ffmpeg.FS('writeFile', fileName, await fetchFile(file));
+
+      // 利用可能な論理コア数を固定で使用（なければ16）
+      const maxThreads = navigator.hardwareConcurrency || 16;
+      const outputFileName = 'output.mp3';
       
-      let outputFileName = '';
-      let args = [];
+      // ffmpegでmp4からmp3へ変換（音声のみ抽出）
+      await ffmpeg.run(
+        '-i', fileName,
+        '-vn',
+        '-ar', '44100',
+        '-ac', '2',
+        '-b:a', '192k',
+        '-threads', maxThreads.toString(),
+        outputFileName
+      );
       
-      // ファイルの種類に応じた変換処理
-      if (fileType.startsWith('video')) {
-        // 動画の場合は、プリセットをultrafast、スレッド数を固定し、解像度指定は行わない（元解像度を維持）
-        outputFileName = 'output.mp4';
-        args = ['-i', fileName, '-preset', 'ultrafast', '-threads', maxThreads.toString(), outputFileName];
-      } else if (fileType.startsWith('audio')) {
-        // 音声の場合はmp3へ変換
-        outputFileName = 'output.mp3';
-        args = ['-i', fileName, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', outputFileName];
-      } else if (fileType.startsWith('image')) {
-        // 画像の場合はjpgへ変換
-        outputFileName = 'output.jpg';
-        args = ['-i', fileName, outputFileName];
-      } else {
-        // その他の場合は、可能な限りmp4へ変換
-        outputFileName = 'output.mp4';
-        args = ['-i', fileName, '-preset', 'ultrafast', '-threads', maxThreads.toString(), outputFileName];
-      }
-      
-      // ffmpegによる変換処理実行
-      await ffmpeg.run(...args);
       const data = ffmpeg.FS('readFile', outputFileName);
-      
-      // 出力ファイルのMIMEタイプを決定
-      let mimeType = 'application/octet-stream';
-      if (fileType.startsWith('video') || outputFileName.endsWith('.mp4')) {
-        mimeType = 'video/mp4';
-      } else if (fileType.startsWith('audio') || outputFileName.endsWith('.mp3')) {
-        mimeType = 'audio/mp3';
-      } else if (fileType.startsWith('image') || outputFileName.endsWith('.jpg')) {
-        mimeType = 'image/jpeg';
-      }
-      
-      const blobUrl = URL.createObjectURL(new Blob([data.buffer], { type: mimeType }));
-      
-      // プレビュー領域に変換結果を表示
-      const previewContainer = document.getElementById('previewContainer');
-      previewContainer.innerHTML = ''; // 既存のプレビューをクリア
-      
-      if (mimeType.startsWith('video')) {
-        const video = document.createElement('video');
-        video.controls = true;
-        video.src = blobUrl;
-        video.style.maxWidth = '100%';
-        previewContainer.appendChild(video);
-      } else if (mimeType.startsWith('audio')) {
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.src = blobUrl;
-        previewContainer.appendChild(audio);
-      } else if (mimeType.startsWith('image')) {
-        const img = document.createElement('img');
-        img.src = blobUrl;
-        img.style.maxWidth = '100%';
-        previewContainer.appendChild(img);
-      } else {
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = outputFileName;
-        link.textContent = '変換結果をダウンロード';
-        previewContainer.appendChild(link);
-      }
-    };
-    
-    document.getElementById('uploader').addEventListener('change', transcode);
+      const blobUrl = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mp3' }));
+
+      // プレビュー表示（音声プレイヤー）
+      previewContainer.innerHTML = "";
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = blobUrl;
+      previewContainer.appendChild(audio);
+    });
   </script>
 </body>
 </html>
-
