@@ -6,6 +6,8 @@
   <title>emon ＾＾</title>
   <!-- ドットフォント -->
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <!-- Font Awesome アイコン -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* 全体設定 */
     body {
@@ -328,6 +330,129 @@
       opacity: 1;
       animation: borderGlow 2s linear infinite;
     }
+    
+    /* ソーシャルアイコン用スタイル */
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      gap: 25px;
+    }
+    
+    .social-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #0ff;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    
+    .social-icon i {
+      font-size: 24px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+    
+    .social-icon::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff);
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 50%;
+    }
+    
+    .social-icon:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+    }
+    
+    .social-icon:hover i {
+      transform: scale(1.2);
+    }
+    
+    .social-icon:hover::before {
+      opacity: 1;
+      animation: borderGlow 2s linear infinite;
+    }
+    
+    /* バイオセクション */
+    .bio-section {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #0ff;
+      border-radius: 25px;
+      padding: 20px;
+      margin-top: 25px;
+      position: relative;
+      overflow: hidden;
+      display: none;
+    }
+    
+    /* バイオセクションのグローエフェクト */
+    .bio-section::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #0ff, transparent, #0ff, transparent);
+      z-index: -1;
+      border-radius: 27px;
+      animation: borderGlow 3s linear infinite;
+      animation-delay: 1s;
+    }
+    
+    .bio-title {
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff;
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .bio-content {
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: left;
+      word-wrap: break-word;
+    }
+    
+    /* バイオボタン */
+    #bioButton {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #0ff;
+      border-radius: 15px;
+      padding: 8px 18px;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    
+    #bioButton:hover {
+      background: rgba(0, 0, 0, 0.9);
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+    }
   </style>
 </head>
 <body>
@@ -348,6 +473,32 @@
       </div>
       
       <div class="caption">衛門</div>
+      
+      <!-- ソーシャルアイコン -->
+      <div class="social-icons">
+        <div class="social-icon" id="soundcloudIcon">
+          <i class="fab fa-soundcloud"></i>
+        </div>
+        <div class="social-icon" id="githubIcon">
+          <i class="fab fa-github"></i>
+        </div>
+        <div class="social-icon" id="youtubeIcon">
+          <i class="fab fa-youtube"></i>
+        </div>
+      </div>
+      
+      <!-- バイオボタン -->
+      <div id="bioButton">Bio</div>
+    </div>
+    
+    <!-- バイオセクション -->
+    <div class="bio-section" id="bioSection">
+      <div class="bio-title">About Me</div>
+      <div class="bio-content">
+        無類のナードコア好きの衛門です。プログラミングもしています。
+        <br><br>
+        自作曲はSoundCloudやyoutubeで、プログラミングはgithubで公開していますので、是非チェックしてみてください。
+      </div>
     </div>
     
     <div class="player-frame">
@@ -374,6 +525,37 @@
     const body = document.body;
     const pageTitle = document.getElementById('pageTitle');
     const particles = document.getElementById('particles');
+    const bioButton = document.getElementById('bioButton');
+    const bioSection = document.getElementById('bioSection');
+    
+    // ソーシャルアイコンの要素
+    const soundcloudIcon = document.getElementById('soundcloudIcon');
+    const githubIcon = document.getElementById('githubIcon');
+    const youtubeIcon = document.getElementById('youtubeIcon');
+    
+    // ソーシャルアイコンのクリックイベント
+    soundcloudIcon.addEventListener('click', () => {
+      window.open('https://soundcloud.com/n0gejhpoqrgc', '_blank');
+    });
+    
+    githubIcon.addEventListener('click', () => {
+      window.open('https://github.com/Emon2358', '_blank');
+    });
+    
+    youtubeIcon.addEventListener('click', () => {
+      window.open('https://www.youtube.com/@unkochan12345', '_blank');
+    });
+    
+    // バイオボタンのクリックイベント
+    bioButton.addEventListener('click', () => {
+      if (bioSection.style.display === 'none' || bioSection.style.display === '') {
+        bioSection.style.display = 'block';
+        bioButton.textContent = 'Close Bio';
+      } else {
+        bioSection.style.display = 'none';
+        bioButton.textContent = 'Bio';
+      }
+    });
 
     // 光る粒子を作成
     function createParticles() {
