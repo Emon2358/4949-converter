@@ -4,20 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>4949 coverter</title>
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.9.4/dist/ffmpeg.min.js"></script>
+  <!-- ドットフォント -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    /* 背景画像と全体設定 */
+    /* 全体設定 */
     body {
       margin: 0;
       padding: 0;
+      font-family: 'Press Start 2P', monospace;
       background: url('https://i.pinimg.com/736x/c5/df/25/c5df256709eb23175ed823ee6c8488e7.jpg') no-repeat center center fixed;
       background-size: cover;
-      font-family: sans-serif;
-      color: white;
+      color: #fff;
       position: relative;
-      z-index: 2;
+      overflow: hidden;
     }
-    /* 黒と白のグラデーションアニメーションのオーバーレイ */
+    /* グラデーションオーバーレイ */
     #gradientOverlay {
       position: fixed;
       top: 0;
@@ -33,21 +34,79 @@
       0% { filter: hue-rotate(0deg); }
       100% { filter: hue-rotate(360deg); }
     }
-    /* コンテンツ領域 */
-    .container {
-      position: relative;
-      z-index: 3;
-      padding: 20px;
+    /* 中央コンテンツ */
+    .center-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      transition: transform 0.1s ease-out;
     }
-    /* プレビュー表示 */
-    #previewContainer {
+    /* 3Dホバーエフェクト */
+    .center-container:hover {
+      transition: transform 0.05s ease-out;
+    }
+    /* ネオンテキスト */
+    .neon {
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+    /* 再生進捗バー */
+    #progressBar {
+      width: 100%;
+      height: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid #0ff;
       margin-top: 20px;
+      position: relative;
+      overflow: hidden;
     }
-    /* ボタンのスタイル */
-    button {
-      padding: 10px 20px;
+    #progress {
+      height: 100%;
+      width: 0;
+      background: #0ff;
+      box-shadow: 0 0 10px #0ff;
+    }
+    /* Discordアイコン風の丸枠 */
+    .icon-container {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    .icon-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    /* 下部キャプション「衛門」 */
+    .caption {
+      margin-top: 10px;
       font-size: 16px;
+      color: #fff;
+      text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+    /* 初回表示ボタン */
+    #startButton {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 40px;
+      font-size: 24px;
       cursor: pointer;
+      background: rgba(0,0,0,0.7);
+      border: 2px solid #0ff;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      transition: background 0.3s;
+    }
+    #startButton:hover {
+      background: rgba(0,0,0,0.9);
     }
   </style>
 </head>
@@ -55,76 +114,81 @@
   <!-- グラデーションオーバーレイ -->
   <div id="gradientOverlay"></div>
   
-  <div class="container">
-    <h1>4949 coverter</h1>
-    <!-- mp4ファイルのみ受け付ける -->
-    <input type="file" id="uploader" accept="video/mp4">
-    <br><br>
-    <button id="convertBtn" disabled>mp4をmp3に変換</button>
-    <!-- 変換後のプレビュー表示エリア -->
-    <div id="previewContainer"></div>
+  <!-- 初回再生ボタン -->
+  <div id="startButton">click here</div>
+  
+  <!-- 中央コンテナ -->
+  <div class="center-container" id="trackContainer" style="display: none;">
+    <div class="icon-container">
+      <img src="https://i.pinimg.com/736x/d4/85/2e/d4852e4d248d7a8f31d7db2127e7d9fd.jpg" alt="Icon">
+    </div>
+    <div class="caption">衛門</div>
+    <h2 class="neon" id="trackTitle">Track Title</h2>
+    <div id="progressBar">
+      <div id="progress"></div>
+    </div>
   </div>
   
+  <audio id="audioPlayer" preload="auto"></audio>
+
   <script>
-    const { createFFmpeg, fetchFile } = FFmpeg;
-    const ffmpeg = createFFmpeg({ log: true });
-    const uploader = document.getElementById('uploader');
-    const convertBtn = document.getElementById('convertBtn');
-    const previewContainer = document.getElementById('previewContainer');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const trackTitle = document.getElementById('trackTitle');
+    const progressBar = document.getElementById('progress');
+    const trackContainer = document.getElementById('trackContainer');
+    const startButton = document.getElementById('startButton');
+    const container = document.querySelector(".center-container");
 
-    // ページ読み込み時にffmpegを事前ロード
-    (async () => {
-      await ffmpeg.load();
-      console.log("ffmpeg loaded");
-    })();
+    // GitHub API からファイルリスト取得
+    async function fetchTrackList() {
+      const repoUrl = "https://api.github.com/repos/Emon2358/nerdcore-museum/contents/downloads";
+      const response = await fetch(repoUrl);
+      const data = await response.json();
+      return data
+        .filter(file => file.name.endsWith('.mp3') || file.name.endsWith('.m4a'))
+        .map(file => ({
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          file: file.download_url
+        }));
+    }
 
-    // ファイル選択時、mp4以外の場合は変換できないようにする
-    uploader.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file && file.type === 'video/mp4') {
-        convertBtn.disabled = false;
-      } else {
-        convertBtn.disabled = true;
-        alert("mp4ファイルを選択してください。");
+    let tracks = [];
+
+    async function loadTracksAndPlay() {
+      tracks = await fetchTrackList();
+      playRandomTrack();
+    }
+
+    function playRandomTrack() {
+      if (tracks.length === 0) return;
+      const track = tracks[Math.floor(Math.random() * tracks.length)];
+      trackTitle.textContent = track.title;
+      audioPlayer.src = track.file;
+      audioPlayer.play();
+    }
+
+    // 再生進捗バー更新
+    audioPlayer.addEventListener("timeupdate", () => {
+      if (audioPlayer.duration) {
+        progressBar.style.width = (audioPlayer.currentTime / audioPlayer.duration) * 100 + "%";
       }
     });
 
-    // mp4をmp3に変換する処理
-    convertBtn.addEventListener('click', async () => {
-      const file = uploader.files[0];
-      if (!file || file.type !== 'video/mp4') {
-        alert("有効なmp4ファイルが選択されていません。");
-        return;
-      }
-      
-      const fileName = file.name;
-      // 仮想ファイルシステムへファイル書き込み
-      ffmpeg.FS('writeFile', fileName, await fetchFile(file));
+    // 曲が終了したら次のランダム曲再生
+    audioPlayer.addEventListener("ended", playRandomTrack);
 
-      // 利用可能な論理コア数を固定で使用（なければ16）
-      const maxThreads = navigator.hardwareConcurrency || 16;
-      const outputFileName = 'output.mp3';
-      
-      // ffmpegでmp4からmp3へ変換（音声のみ抽出）
-      await ffmpeg.run(
-        '-i', fileName,
-        '-vn',
-        '-ar', '44100',
-        '-ac', '2',
-        '-b:a', '192k',
-        '-threads', maxThreads.toString(),
-        outputFileName
-      );
-      
-      const data = ffmpeg.FS('readFile', outputFileName);
-      const blobUrl = URL.createObjectURL(new Blob([data.buffer], { type: 'audio/mp3' }));
+    // スタートボタン押下で再生
+    startButton.addEventListener("click", () => {
+      startButton.style.display = "none";
+      trackContainer.style.display = "block";
+      loadTracksAndPlay();
+    });
 
-      // プレビュー表示（音声プレイヤー）
-      previewContainer.innerHTML = "";
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.src = blobUrl;
-      previewContainer.appendChild(audio);
+    // マウスホバーで 3D に傾く処理
+    document.addEventListener("mousemove", (e) => {
+      const x = (window.innerWidth / 2 - e.pageX) / 20;
+      const y = (window.innerHeight / 2 - e.pageY) / 20;
+      container.style.transform = `translate(-50%, -50%) rotateY(${x}deg) rotateX(${y}deg)`;
     });
   </script>
 </body>
