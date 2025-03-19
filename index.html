@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4949 coverter</title>
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.9.4/dist/ffmpeg.min.js"></script>
+  <style>
+    /* 背景画像と全体設定 */
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://i.pinimg.com/736x/c5/df/25/c5df256709eb23175ed823ee6c8488e7.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: sans-serif;
+      position: relative;
+      z-index: 2;
+      color: white;
+    }
+    /* 黒と白のグラデーションアニメーションのオーバーレイ */
+    #gradientOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: linear-gradient(45deg, rgba(0,0,0,0.5), rgba(255,255,255,0.5));
+      animation: gradientAnimation 10s infinite alternate;
+      z-index: 1;
+    }
+    @keyframes gradientAnimation {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+    /* コンテンツ領域 */
+    .container {
+      position: relative;
+      z-index: 3;
+      padding: 20px;
+    }
+    #previewContainer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- グラデーションオーバーレイ -->
+  <div id="gradientOverlay"></div>
+  
+  <div class="container">
+    <h1>4949 coverter</h1>
+    <!-- すべてのファイル形式に対応 -->
+    <input type="file" id="uploader" accept="*/*">
+    <!-- 変換後のプレビュー表示エリア -->
+    <div id="previewContainer"></div>
+  </div>
+  
+  <script>
+    const { createFFmpeg, fetchFile } = FFmpeg;
+    const ffmpeg = createFFmpeg({ log: true });
+    
+    // 利用可能な論理コア数を取得（なければ16をデフォルトに）
+    const maxThreads = navigator.hardwareConcurrency || 16;
+    
+    // ページ読み込み時にffmpegを事前ロード
+    (async () => {
+      await ffmpeg.load();
+      console.log("ffmpeg loaded");
+    })();
+    
+    const transcode = async ({ target: { files } }) => {
+      const file = files[0];
+      const fileName = file.name;
+      const fileType = file.type;
+      
+      // 仮想ファイルシステムに入力ファイルを書き込む
+      ffmpeg.FS('writeFile', fileName, await fetchFile(file));
+      
+      let outputFileName = '';
+      let args = [];
+      
+      // ファイルの種類に応じた変換処理
+      if (fileType.startsWith('video')) {
+        // 動画の場合は、プリセットをultrafast、スレッド数を固定し、解像度指定は行わない（元解像度を維持）
+        outputFileName = 'output.mp4';
+        args = ['-i', fileName, '-preset', 'ultrafast', '-threads', maxThreads.toString(), outputFileName];
+      } else if (fileType.startsWith('audio')) {
+        // 音声の場合はmp3へ変換
+        outputFileName = 'output.mp3';
+        args = ['-i', fileName, '-vn', '-ar', '44100', '-ac', '2', '-b:a', '192k', outputFileName];
+      } else if (fileType.startsWith('image')) {
+        // 画像の場合はjpgへ変換
+        outputFileName = 'output.jpg';
+        args = ['-i', fileName, outputFileName];
+      } else {
+        // その他の場合は、可能な限りmp4へ変換
+        outputFileName = 'output.mp4';
+        args = ['-i', fileName, '-preset', 'ultrafast', '-threads', maxThreads.toString(), outputFileName];
+      }
+      
+      // ffmpegによる変換処理実行
+      await ffmpeg.run(...args);
+      const data = ffmpeg.FS('readFile', outputFileName);
+      
+      // 出力ファイルのMIMEタイプを決定
+      let mimeType = 'application/octet-stream';
+      if (fileType.startsWith('video') || outputFileName.endsWith('.mp4')) {
+        mimeType = 'video/mp4';
+      } else if (fileType.startsWith('audio') || outputFileName.endsWith('.mp3')) {
+        mimeType = 'audio/mp3';
+      } else if (fileType.startsWith('image') || outputFileName.endsWith('.jpg')) {
+        mimeType = 'image/jpeg';
+      }
+      
+      const blobUrl = URL.createObjectURL(new Blob([data.buffer], { type: mimeType }));
+      
+      // プレビュー領域に変換結果を表示
+      const previewContainer = document.getElementById('previewContainer');
+      previewContainer.innerHTML = ''; // 既存のプレビューをクリア
+      
+      if (mimeType.startsWith('video')) {
+        const video = document.createElement('video');
+        video.controls = true;
+        video.src = blobUrl;
+        video.style.maxWidth = '100%';
+        previewContainer.appendChild(video);
+      } else if (mimeType.startsWith('audio')) {
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = blobUrl;
+        previewContainer.appendChild(audio);
+      } else if (mimeType.startsWith('image')) {
+        const img = document.createElement('img');
+        img.src = blobUrl;
+        img.style.maxWidth = '100%';
+        previewContainer.appendChild(img);
+      } else {
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = outputFileName;
+        link.textContent = '変換結果をダウンロード';
+        previewContainer.appendChild(link);
+      }
+    };
+    
+    document.getElementById('uploader').addEventListener('change', transcode);
+  </script>
+</body>
+</html>
+
